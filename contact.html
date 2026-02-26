@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Taxi France | 24/7 Private Transfer</title>
+    <link rel="icon" type="image/x-icon" href="img/logo/unnamed.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ===== VARIABLES ===== */
+        :root {
+            --yellow:   #F7C948;
+            --yellow-light: #fde047;
+            --dark:     #1F2937;
+            --black:    #111827;
+            --gray-900: #111827;
+            --gray-800: #1f2937;
+            --gray-700: #374151;
+            --gray-600: #4b5563;
+            --gray-500: #6b7280;
+            --gray-400: #9ca3af;
+            --gray-300: #d1d5db;
+            --gray-200: #e5e7eb;
+            --gray-100: #f3f4f6;
+            --slate-50: #f8fafc;
+            --white:    #ffffff;
+            --green:    #22c55e;
+            --green-500: #22c55e;
+            --blue-600: #2563eb;
+        }
+
+        /* ===== RESET ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--dark);
+            background: var(--slate-50);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; }
+        img { display: block; max-width: 100%; }
+        button { font-family: inherit; cursor: pointer; border: none; }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* ===== CONTAINER ===== */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        @media (min-width: 640px)  { .container { padding: 0 1.5rem; } }
+        @media (min-width: 1024px) { .container { padding: 0 2rem; } }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes blob {
+            0%   { transform: translate(0, 0) scale(1); }
+            33%  { transform: translate(30px, -50px) scale(1.1); }
+            66%  { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-10px); }
+        }
+        .animate-blob  { animation: blob 7s infinite; }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .anim-delay-2  { animation-delay: 2s; }
+        .anim-delay-4  { animation-delay: 4s; }
+
+        /* ===== FADE-IN ===== */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        /* ===== NAVBAR ===== */
+        #navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 50;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--gray-100);
+            transition: box-shadow 0.3s;
+        }
+        #navbar.shadow-md { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+        .logo-icon {
+            background: var(--yellow);
+            color: var(--black);
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: transform 0.3s;
+            font-size: 1.25rem;
+        }
+        .nav-logo:hover .logo-icon { transform: rotate(12deg); }
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--black);
+        }
+        .logo-text span { color: #eab308; }
+        .desktop-nav {
+            display: none;
+            align-items: center;
+            gap: 2rem;
+        }
+        @media (min-width: 768px) { .desktop-nav { display: flex; } }
+        .desktop-nav a {
+            color: var(--gray-600);
+            font-weight: 500;
+            transition: color 0.2s;
+            font-size: 0.95rem;
+        }
+        .desktop-nav a:hover { color: #ca8a04; }
+        .desktop-nav a.active { color: #ca8a04; font-weight: 700; }
+        .btn-book {
+            background: var(--black);
+            color: var(--white);
+            padding: 0.625rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 0.9rem;
+        }
+        .btn-book:hover {
+            background: #eab308;
+            color: var(--black);
+            box-shadow: 0 4px 20px rgba(234,179,8,0.3);
+        }
+        #mobile-menu-btn {
+            display: block;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray-600);
+            font-size: 1.5rem;
+        }
+        @media (min-width: 768px) { #mobile-menu-btn { display: none; } }
+        #mobile-menu {
+            display: none;
+            position: absolute;
+            width: 100%;
+            background: var(--white);
+            border-top: 1px solid var(--gray-100);
+        }
+        #mobile-menu.open { display: block; }
+        .mobile-menu-inner {
+            padding: 0.5rem 1rem 1.5rem;
+        }
+        .mobile-menu-inner a {
+            display: block;
+            padding: 0.75rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .mobile-menu-inner a:hover {
+            background: #fefce8;
+            color: #ca8a04;
+        }
+        .mobile-menu-inner a.active {
+            background: #fefce8;
+            color: #ca8a04;
+            font-weight: 700;
+        }
+        .btn-book-mobile {
+            display: block;
+            margin-top: 1rem;
+            text-align: center;
+            background: var(--black);
+            color: var(--white);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 700;
+        }
+
+        
+        /* ===== CONTACT CARDS ===== */
+        #direct-contact {
+            
+            padding: 5rem 0;
+            position: relative;
+            margin-top: -2.5rem;
+            z-index: 20;
+        }
+        .contact-grid {
+            display: grid;
+            gap: 2rem;
+        }
+        @media (min-width: 768px) { .contact-grid { grid-template-columns: repeat(3, 1fr); } }
+        .contact-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            border-bottom: 4px solid transparent;
+        }
+        .contact-card:hover {
+            box-shadow: 0 25px 50px rgba(0,0,0,0.12);
+            transform: translateY(-8px);
+        }
+        .contact-card.yellow-border { border-bottom-color: #eab308; }
+        .contact-card.green-border  { border-bottom-color: #22c55e; }
+        .contact-card.blue-border   { border-bottom-color: #3b82f6; }
+        .card-icon {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1.5rem;
+            transition: background 0.3s;
+            font-size: 1.5rem;
+        }
+        .icon-yellow-bg { background: #fef9c3; }
+        .icon-yellow-bg i { color: #ca8a04; transition: color 0.3s; }
+        .contact-card.yellow-border:hover .icon-yellow-bg { background: #eab308; }
+        .contact-card.yellow-border:hover .icon-yellow-bg i { color: var(--white); }
+
+        .icon-green-bg { background: #dcfce7; }
+        .icon-green-bg i { color: #16a34a; transition: color 0.3s; }
+        .contact-card.green-border:hover .icon-green-bg { background: #22c55e; }
+        .contact-card.green-border:hover .icon-green-bg i { color: var(--white); }
+
+        .icon-blue-bg { background: #dbeafe; }
+        .icon-blue-bg i { color: #2563eb; transition: color 0.3s; }
+        .contact-card.blue-border:hover .icon-blue-bg { background: #3b82f6; }
+        .contact-card.blue-border:hover .icon-blue-bg i { color: var(--white); }
+
+        .contact-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+        .contact-card > p {
+            color: var(--gray-500);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        .link-phone {
+            display: inline-flex;
+            align-items: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            transition: color 0.2s;
+        }
+        .link-phone:hover { color: #ca8a04; }
+        .link-phone i { margin-left: 0.5rem; font-size: 0.875rem; }
+        .online-badge {
+            font-size: 0.8rem;
+            color: #16a34a;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        .btn-whatsapp {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            background: #22c55e;
+            color: var(--white);
+            border-radius: 8px;
+            font-weight: 700;
+            gap: 0.5rem;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+        }
+        .btn-whatsapp:hover { background: #16a34a; }
+        .link-email {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #2563eb;
+            transition: color 0.2s;
+        }
+        .link-email:hover { color: #1d4ed8; }
+        .response-time {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--gray-400);
+        }
+
+        /* ===== MAP & LOCATION ===== */
+        #locations {
+            padding: 4rem 0;
+            background: var(--white);
+        }
+        .location-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            align-items: center;
+        }
+        @media (min-width: 1024px) {
+            .location-grid { flex-direction: row; gap: 3rem; }
+        }
+        .location-info {
+            width: 100%;
+        }
+        @media (min-width: 1024px) { .location-info { width: 33.333%; } }
+        .loc-label {
+            color: #eab308;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 0.8rem;
+        }
+        .loc-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0.5rem 0 1rem;
+        }
+        .loc-desc {
+            color: var(--gray-600);
+            line-height: 1.7;
+        }
+        .loc-details {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .loc-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        .loc-item-icon {
+            margin-top: 2px;
+            color: #eab308;
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .loc-item h4 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+        .loc-item p {
+            color: var(--gray-600);
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+        .loc-item small {
+            color: var(--gray-400);
+            font-size: 0.75rem;
+        }
+        .btn-directions {
+            margin-top: 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--gray-100);
+            color: var(--gray-800);
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+        }
+        .btn-directions:hover { background: var(--gray-200); }
+        .map-wrap {
+            width: 100%;
+            height: 400px;
+            background: var(--gray-200);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid var(--gray-200);
+            position: relative;
+        }
+        @media (min-width: 1024px) { .map-wrap { width: 66.666%; } }
+        #map { height: 100%; width: 100%; z-index: 1; }
+
+        /* ===== APP SECTION ===== */
+        .app-section {
+            padding: 5rem 0;
+            background: var(--black);
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+        .app-section-dots {
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+            background-image: radial-gradient(#F7C948 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        .app-card {
+            position: relative;
+            z-index: 10;
+            background: linear-gradient(135deg, var(--gray-800), var(--gray-900));
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 32px 64px rgba(0,0,0,0.3);
+            border: 1px solid var(--gray-700);
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            align-items: center;
+        }
+        @media (min-width: 768px) {
+            .app-card {
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 4rem;
+            }
+        }
+        .app-content {
+            text-align: center;
+        }
+        @media (min-width: 768px) {
+            .app-content { text-align: left; width: 50%; }
+        }
+        .app-badge {
+            display: inline-block;
+            background: #eab308;
+            color: var(--black);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .app-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+        @media (min-width: 768px) { .app-title { font-size: 2.25rem; } }
+        .app-desc {
+            color: var(--gray-400);
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+        .store-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            justify-content: center;
+        }
+        @media (min-width: 640px) { .store-btns { flex-direction: row; } }
+        @media (min-width: 768px) { .store-btns { justify-content: flex-start; } }
+        .btn-appstore {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--white);
+            color: var(--black);
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            gap: 0.75rem;
+            border: none;
+            font-family: inherit;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .btn-appstore:hover { background: var(--gray-200); }
+        .btn-appstore i { font-size: 1.5rem; }
+        .btn-appstore .small { font-size: 0.7rem; color: var(--gray-600); font-weight: 600; }
+        .btn-appstore .big  { font-size: 0.875rem; font-weight: 700; }
+        .btn-playstore {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: var(--white);
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            gap: 0.75rem;
+            border: 1px solid var(--gray-600);
+            font-family: inherit;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .btn-playstore:hover { background: var(--gray-800); }
+        .btn-playstore i { font-size: 1.5rem; color: #4ade80; }
+        .btn-playstore .small { font-size: 0.7rem; color: var(--gray-400); font-weight: 600; }
+        .btn-playstore .big  { font-size: 0.875rem; font-weight: 700; }
+
+        /* Phone mockup */
+        .phone-wrap {
+            display: flex;
+            justify-content: center;
+        }
+        @media (min-width: 768px) { .phone-wrap { width: 50%; } }
+        .phone {
+            position: relative;
+            width: 256px;
+            height: 500px;
+            background: var(--black);
+            border-radius: 3rem;
+            border: 8px solid var(--gray-800);
+            box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        .phone-screen { position: absolute; inset: 0; background: var(--gray-900); }
+        .phone-header {
+            background: #eab308;
+            height: 8rem;
+            padding: 1.5rem 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        .phone-header .greeting  { font-weight: 700; font-size: 1.125rem; color: var(--black); }
+        .phone-header .sub       { font-size: 0.875rem; color: rgba(0,0,0,0.6); }
+        .phone-body {
+            background: var(--gray-800);
+            padding: 1rem;
+            height: calc(100% - 8rem);
+            position: relative;
+        }
+        .phone-bar-1 { height: 8px; background: var(--gray-700); border-radius: 4px; margin-bottom: 0.5rem; width: 75%; }
+        .phone-bar-2 { height: 8px; background: var(--gray-700); border-radius: 4px; margin-bottom: 1.5rem; width: 50%; }
+        .phone-taxi-dot {
+            position: absolute;
+            top: 5rem; left: 3rem;
+            background: var(--white);
+            padding: 0.5rem;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .phone-taxi-dot i { color: #eab308; }
+        .phone-bottom-card {
+            position: absolute;
+            bottom: 6rem; left: 1rem; right: 1rem;
+            background: var(--white);
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        .phone-bottom-card .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .phone-bottom-card .label { font-weight: 700; color: var(--black); font-size: 0.875rem; }
+        .phone-bottom-card .price { font-weight: 700; color: var(--black); font-size: 0.875rem; }
+        .phone-confirm {
+            background: var(--black);
+            color: var(--white);
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* ===== FAQ ===== */
+        .faq-section {
+            padding: 4rem 0;
+            background: var(--slate-50);
+        }
+        .faq-section h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2.5rem;
+            color: var(--gray-900);
+        }
+        .faq-grid {
+            display: grid;
+            gap: 1.5rem;
+            max-width: 56rem;
+            margin: 0 auto;
+        }
+        @media (min-width: 768px) { .faq-grid { grid-template-columns: repeat(2, 1fr); } }
+        .faq-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+            border: 1px solid var(--gray-100);
+        }
+        .faq-card h4 {
+            font-weight: 700;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray-900);
+        }
+        .faq-card h4 i { color: #eab308; }
+        .faq-card p {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        .faq-card a { color: var(--blue-600); text-decoration: underline; }
+
+       
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav id="navbar" style="background-color: #020617;">
+        <div class="container">
+            <div class="navbar-inner">
+                <div class="logo">
+                    <div class="logo">
+                    <img src="img/logo/unnamed.png" alt="logo" style="width: 80px; height: 80px;">
+                    
+                </div>
+
+                </div>
+
+                <div class="nav-links">
+                    <a href="index.html">Home</a>
+                    <a href="about.html">About</a>
+                    <a href="service.html">Services</a>
+                    <a href="contact.html">Contact</a>
+                </div>
+
+                <button id="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+
+        <div id="mobile-menu">
+            <div class="mobile-menu-inner">
+                <a href="index.html">Home</a>
+                <a href="about.html">About</a>
+                <a href="service.html">Services</a>
+                
+               
+                <a href="contact.html">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Header -->
+    
+
+    <!-- Main Content -->
+    <main>
+
+        <!-- Contact Options -->
+        <section id="direct-contact">
+            <div class="container" style="margin-top: 80px;">
+                <div class="contact-grid">
+
+                    <!-- Phone -->
+                    <div class="contact-card yellow-border fade-in-section">
+                        <div class="card-icon icon-yellow-bg">
+                            <i class="fa-solid fa-phone-volume"></i>
+                        </div>
+                        <h3>Call Dispatch</h3>
+                        <p>Immediate booking and 24/7 support for current rides.</p>
+                        <a href="tel:+33143327081" class="link-phone">
+                            +33 (0)1 43 327 081
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        <p class="online-badge">
+                            <i class="fa-solid fa-circle" style="font-size: 8px; margin-right: 4px; vertical-align: middle;"></i>
+                            Operators Online
+                        </p>
+                    </div>
+
+                    <!-- WhatsApp -->
+                    <div class="contact-card green-border fade-in-section">
+                        <div class="card-icon icon-green-bg">
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </div>
+                        <h3>WhatsApp Booking</h3>
+                        <p>Send us your location and get a ride in minutes via chat.</p>
+                        <a href="https://wa.me/+33609713576" target="_blank" class="btn-whatsapp">
+                            <i class="fa-brands fa-whatsapp"></i> Chat Now
+                        </a>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="contact-card blue-border fade-in-section">
+                        <div class="card-icon icon-blue-bg">
+                            <i class="fa-solid fa-envelope-open-text"></i>
+                        </div>
+                        <h3>Business Inquiries</h3>
+                        <p>For corporate accounts, events, and lost & found.</p>
+                        <a href="mailto:Contact@groupbluevanparis.com" class="link-email">Contact@groupbluevanparis.com</a>
+                        <p class="response-time">Response time: ~2 hours</p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Map & Location -->
+        <section id="locations" class="fade-in-section">
+            <div class="container">
+                <div class="location-grid">
+                    <div class="location-info">
+                        <span class="loc-label">Headquarters</span>
+                        <h2 class="loc-title">Visit Our Main Office</h2>
+                        <p class="loc-desc">Our dispatch center and lost & found department are open to the public during business hours.</p>
+
+                        <div class="loc-details">
+                            <div class="loc-item">
+                                <div class="loc-item-icon">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </div>
+                                <div>
+                                    <h4>France</h4>
+                                    <p>Le Blanc-Mesnil, 
+                                        <br>93150 - France</p>
+                                </div>
+                            </div>
+                            <div class="loc-item">
+                                <div class="loc-item-icon">
+                                    <i class="fa-solid fa-clock"></i>
+                                </div>
+                                <div>
+                                    <h4>Office Hours</h4>
+                                    <p>Mon - Sun: 6:00 AM - 10:00 PM</p>
+                                    <small>(Drivers available 24/7)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn-directions" onclick="window.open('https://maps.google.com')">
+                            <i class="fa-solid fa-diamond-turn-right"></i> Get Directions
+                        </button>
+                    </div>
+
+                    <div class="map-wrap">
+                        <div id="map">
+                           <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d41933.72580945835!2d2.416368557042371!3d48.937149013518614!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e614aca01d6a1d%3A0x187c5de38832d54b!2s93150%20Le%20Blanc-Mesnil%2C%20France!5e0!3m2!1sen!2slk!4v1772014906323!5m2!1sen!2slk" width="800" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+        <!-- FAQ -->
+        <section class="faq-section fade-in-section">
+            <div class="container">
+                <h2>Common Questions</h2>
+                <div class="faq-grid">
+                    <div class="faq-card">
+                        <h4><i class="fa-solid fa-circle-question"></i> What is an intercity taxi in France?</h4>
+                        <p>An <strong>intercity taxi in France</strong> service allows you to travel comfortably between cities like Paris, Lyon, and Marseille with a private driver and fixed pricing.</p>
+                    </div>
+                    <div class="faq-card">
+                        <h4><i class="fa-solid fa-briefcase"></i> Lost Item?</h4>
+                        <p>Call dispatch immediately at <a href="tel:+33143327081">+33 (0)1 43 327 081</a> with your ride details.</p>
+                    </div>
+                    <div class="faq-card">
+                        <h4><i class="fa-solid fa-plane-departure"></i> Airport Runs?</h4>
+                        <p>Yes, we offer flat rates to all major airports. Pre-booking recommended.</p>
+                    </div>
+                    <div class="faq-card">
+                        <h4><i class="fa-solid fa-paw"></i> Pets?</h4>
+                        <p>Small pets in carriers are welcome. Please notify dispatch when booking.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div class="footer-logo">
+                         <img src="img/logo/unnamed.png" alt="CityRide Logo" style="width: 100px; height: 100px;">
+<span class="footer-logo-text">FRANCE<span> AIRPORT <span style="color: aliceblue;">TAXI</span></span></span>                    </div>
+                    <p class="footer-desc">Premium taxi and travel services for the modern traveler. Safe, comfortable, and reliable.</p>
+                    <!-- <div class="social-links">
+                        <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-linkedin-in"></i></a>
+                    </div> -->
+                </div>
+
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Services</h4>
+                    <ul>
+                        <li><a href="#">Airport Transfer</a></li>
+                        <li><a href="#">City Tours</a></li>
+                        <li><a href="#">Corporate Travel</a></li>
+                        <li><a href="#">Wedding Cars</a></li>
+                    </ul>
+                </div>
+
+                <!-- <div class="footer-col">
+                    <h4>Newsletter</h4>
+                    <p class="newsletter-desc">Subscribe for special offers and updates.</p>
+                    <div class="newsletter-form">
+                        <input type="email" class="newsletter-input" placeholder="Your email">
+                        <button class="newsletter-btn"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div> -->
+            </div>
+
+            <div class="footer-bottom">
+                <div>© 2024 CityRide. All rights reserved.</div>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // Mobile menu
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('open');
+        });
+
+        // Fade-in on scroll
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    obs.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.fade-in-section').forEach(el => observer.observe(el));
+
+        // Navbar shadow
+        window.addEventListener('scroll', () => {
+            document.getElementById('navbar').classList.toggle('shadow-md', window.scrollY > 20);
+        });
+
+        // Leaflet Map
+        // document.addEventListener('DOMContentLoaded', () => {
+        //     const map = L.map('map').setView([40.7128, -74.0060], 13);
+        //     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        //         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        //     }).addTo(map);
+
+        //     const taxiIcon = L.divIcon({
+        //         html: '<i class="fa-solid fa-location-dot fa-3x" style="color:#dc2626; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));"></i>',
+        //         className: 'custom-div-icon',
+        //         iconSize: [30, 42],
+        //         iconAnchor: [15, 42]
+        //     });
+
+        //     L.marker([40.7128, -74.0060], { icon: taxiIcon })
+        //         .addTo(map)
+        //         .bindPopup('<b>CityCab HQ</b><br>123 Transit Blvd.')
+        //         .openPopup();
+        // });
+    </script>
+</body>
+</html>
